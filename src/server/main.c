@@ -9,8 +9,13 @@
 #ifdef __linux__
 #include <unistd.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <errno.h>
+#include <wchar.h>
 
 #define SOCKET int
+#define SOCKET_ERROR -1
 
 // Inclusão para windows
 #elif defined(_WIN32) || defined(_WIN64) ||\
@@ -21,17 +26,17 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
+// no linux a função close fecha um descritor d>
+// sendo ele um socket. No windows, a função qu>
+// é o closesocket, define apenas para manter a>
+#define close closesocket
+
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <locale.h>
-
-// no linux a função close fecha um descritor de arquivo,
-// sendo ele um socket. No windows, a função que faz a mesma operação
-// é o closesocket, define apenas para manter a compatibilidade
-#define close closesocket
 
 int get_ipv4_addr(char* buffer, int len);
 
@@ -46,25 +51,28 @@ int main(void) {
         return EXIT_FAILURE;
     }
 #endif
+
     // Definir o endereço e a porta alvo
     // htons (host to network short) e htonl (host to network long)
     // estão sendo usados para converter o valor para ordem big-endian
+    int port = 8000;
+
     struct sockaddr_in addr;
     addr.sin_family = AF_INET; // para endereços ipv4
-    addr.sin_port = htons(5000); // porta alvo
+    addr.sin_port = htons(porr); // porta alvo
     addr.sin_addr.s_addr = htonl(INADDR_ANY); // INADDR_ANY para endereço local
 
     // Criar um socket para conexões tcpip
     SOCKET sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sockfd == SOCKET_ERROR) {
         // __func__ retorna o nome da função atual apenas
-        printf("%s > socket falhou: %i.\n", __func__, errno);
+        wprintf(L"%s > socket falhou: %i.\n", __func__, errno);
         return EXIT_FAILURE;
     }
 
     // Associar o endereço local e a porta definido ao socket criado
     if (bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
-        printf("%s > bind falhou: %i.\n", __func__, errno);
+        wprintf(L"%s > bind falhou: %i.\n", __func__, errno);
 
         close(sockfd);
         return EXIT_FAILURE;
@@ -74,17 +82,17 @@ int main(void) {
     listen(sockfd, 2);
 
     struct sockaddr_in clientaddr;
-    int clientaddr_len = sizeof(clientaddr);
+    socklen_t clientaddr_len = sizeof(clientaddr);
 
     char ipv4_addr[INET_ADDRSTRLEN];
     if (get_ipv4_addr(ipv4_addr, INET_ADDRSTRLEN) == SOCKET_ERROR) {
-        wprintf(L"%s > get_ipv4_addr falhou: %i.\n", __func__, WSAGetLastError());
+        wprintf(L"%s > get_ipv4_addr falhou: %i.\n", __func__, errno);
 
         close(sockfd);
         return EXIT_FAILURE;
     }
 
-    wprintf(L"Endereço: %s\nPorta: %i\n", ipv4_addr, 5000);
+    wprintf(L"Endereço: %s\nPorta: %i\n", ipv4_addr, port);
 
     // loop principal
     while (true) {
@@ -111,7 +119,7 @@ int get_ipv4_addr(char* buffer, int len) {
     // Recuperando o nome do host local
     char hostname[NI_MAXHOST];
     if (gethostname(hostname, sizeof(hostname)) == SOCKET_ERROR) {
-        wprintf(L"%s > gethostname falhou: %i\n.", __func__, WSAGetLastError());
+        wprintf(L"%s > gethostname falhou: %i\n.", __func__, errno);
         return SOCKET_ERROR;
     }
 
@@ -130,7 +138,7 @@ int get_ipv4_addr(char* buffer, int len) {
     hints.ai_socktype = SOCK_STREAM;
 
     if (getaddrinfo(hostname, NULL, &hints, &res) != 0) {
-        printf("%s > getaddrinfo falhou: %i.\n", __func__, WSAGetLastError());
+        wprintf(L"%s > getaddrinfo falhou: %i.\n", __func__, errno);
         return SOCKET_ERROR;
     }
 
@@ -138,11 +146,11 @@ int get_ipv4_addr(char* buffer, int len) {
     // de cadeia de caracteres. Será necessário fazer um cast da estrutura
     // sockaddr para sockaddr_in, sockaddr_in contem um campo sin_addr que
     // representa o endereço ip na forma binaria a ser convertida
-    struct sockaddr_in* in = (struct sockaddr_in*)res->ai_next->ai_addr;
+    struct sockaddr_in* in = (struct sockaddr_in*)res->ai_addr;
     inet_ntop(AF_INET, &in->sin_addr, buffer, len);
 
     if (!buffer) {
-        wprintf(L"%s > inet_ntop falhou: %i.\n", __func__, WSAGetLastError());
+        wprintf(L"%s > inet_ntop falhou: %i.\n", __func__, errno);
 
         freeaddrinfo(res);
         return SOCKET_ERROR;
