@@ -47,7 +47,7 @@ int main(void) {
     // Necessário para utilizar as funções de socket no windows
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        printf("%s > WSAStartup falhou: %i.\n", __func__, WSAGetLastError());
+        printf("%s > WSAStartup falhou: %i.\n", __func__, errno);
         return EXIT_FAILURE;
     }
 #endif
@@ -59,7 +59,7 @@ int main(void) {
 
     struct sockaddr_in addr;
     addr.sin_family = AF_INET; // para endereços ipv4
-    addr.sin_port = htons(porr); // porta alvo
+    addr.sin_port = htons(port); // porta alvo
     addr.sin_addr.s_addr = htonl(INADDR_ANY); // INADDR_ANY para endereço local
 
     // Criar um socket para conexões tcpip
