@@ -1,16 +1,19 @@
-#include "MyPOSIXFunctions.h"
-
-#pragma comment(lib, "MyPOSIXFunctions.lib")
+#include "../../lib/MyPOSIXFunctions.h"
 
 int main(void) {
-    SOCKET client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-    char *server_addr = get_ipv4_addr(NULL);
-    if (!server_addr) {
-        wprintf(L"%s > get_ipv4_addr falhou.\n");
-        return EXIT_FAILURE;
+    int result = _initialize();
+    if (_initialize() != EXIT_SUCCESS) {
+        wprintf(L"%s > _initialize falhou.\n");
+        return result;
     }
 
-    myfree(&server_addr);
+    
+
+    result = _finish();
+    if (result != EXIT_SUCCESS) {
+        wprintf(L"%s > _finish falhou.\n");
+        return result;
+    }
+
     return EXIT_SUCCESS;
 }
