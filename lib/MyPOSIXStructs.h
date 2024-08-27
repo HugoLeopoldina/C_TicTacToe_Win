@@ -14,6 +14,7 @@ typedef struct {
     _OUT SOCKET sockfd;
     _OUT char* ipv4_addr;
     _OUT char* hostname;
-} Server, IPV4_ADDR;
+    _OUT struct addrinfo* addr;
+} Server, IPV4_DATA;
 
 #endif

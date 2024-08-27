@@ -41,9 +41,10 @@
 #define myfree(block) __myfree__((void**)block)
 
 int _initialize(void);
+int _finish(void);
 
 int create_local_server(Server* server);
-char* get_ipv4_addr(char* host);
+int get_ipv4_addr(char* host, IPV4_DATA* ipv4_data);
 char* get_current_dir(void);
 
 void freeServer(Server* server);
