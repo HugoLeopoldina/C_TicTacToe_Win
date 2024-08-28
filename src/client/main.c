@@ -15,5 +15,5 @@ int main(void) {
         return result;
     }
 
-    return EXIT_SUCCESS;
+    return result;
 }

@@ -93,26 +93,8 @@ int create_local_server(Server* server) {
     // Definir o numero de clientes a ser conectados
     listen(sockfd, server->cclient);
 
-	// Recuperando o nome do host
-	char* hostname = (char*)malloc(sizeof(char) * (NI_MAXHOST + 1));
-	if (!hostname) {
-		wprintf(L"%s > hostname > malloc falhou: %i\n", __func__, errno);
-
-		close(sockfd);
-		return EXIT_FAILURE;
-	}
-
-	if (gethostname(hostname, NI_MAXHOST) == SOCKET_ERROR) {
-		wprintf(L"%s > gethostname falhou: %i\n", __func__, errno);
-
-		close(sockfd);
-		myfree(&hostname);
-		return EXIT_FAILURE;
-	}
-
 	// Obtendo o endereço ip local referente ao nome do host
-    int ipv4_addr = get_ipv4_addr(hostname, NULL);
-    if (!ipv4_addr) {
+    if (get_ipv4_addr(NULL, server) == EXIT_FAILURE) {
         wprintf(L"%s > get_ipv4_addr falhou: %i.\n", __func__, errno);
 
         close(sockfd);
@@ -120,9 +102,6 @@ int create_local_server(Server* server) {
     }
 
 	server->sockfd = sockfd;
-	// server->ipv4_addr = ipv4_addr;
-	// server->hostname = hostname;
-
 	return EXIT_SUCCESS;
 }
 
@@ -197,8 +176,18 @@ int get_ipv4_addr(char* host, IPV4_DATA* ipv4_data) {
 
 		myfree(&ipai);
 
+		char *_hostname = (char*)malloc(sizeof(char) * (NI_MAXHOST + 1));
+		if (!_hostname) {
+			wprintf(L"%s > _hostname > malloc{1} falhou.\n", __func__);;
+
+			myfree(&ipv4_addr);
+			return EXIT_FAILURE;
+		}
+
+		memcpy(_hostname, hostname, strlen(hostname) + 1);
+
 		ipv4_data->ipv4_addr = ipv4_addr;
-		ipv4_data->hostname = hostname;
+		ipv4_data->hostname = _hostname;
 
 		// Ao recuperar o endereço ip local da maquina que contenha um gateway padrão
 		// retornar a mesma função passando o endereço ip como host

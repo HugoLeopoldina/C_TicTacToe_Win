@@ -2,9 +2,10 @@
 #include <stdbool.h>
 
 int main(void) {
-    if (_initialize() == EXIT_FAILURE) {
-        wprintf(L"%s > _initialize falhou.\n", __func__);
-        return EXIT_FAILURE;
+    int result = _initialize();
+    if (_initialize() != EXIT_SUCCESS) {
+        wprintf(L"%s > _initialize falhou.\n");
+        return result;
     }
 
     Server server = {
@@ -25,19 +26,23 @@ int main(void) {
                server.ipv4_addr,
                server.port );
 
-    SOCKET sock_p1, sock_p2 = INVALID_SOCKET;
-    struct sockaddr_in addr_p1, addr_p2;
-    int addr_len_p1, addr_len_p2;
+    SOCKET player_1 = INVALID_SOCKET;
+    SOCKET player_2 = INVALID_SOCKET;
+
+    struct sockaddr_in addr_p1 = { 0 };
+    struct sockaddr_in addr_p2 = { 0 };
+
+    int sock_len = sizeof(struct sockaddr_in);
 
     wprintf(L"Aguardando conexões\n");
     while (true) {
-        if (sock_p1 == INVALID_SOCKET) {
-            sock_p1 = accept(server.sockfd, (struct sockaddr*)&addr_p1, &addr_len_p1);
+        if (player_1 == INVALID_SOCKET) {
+            player_1 = accept(server.sockfd, (struct sockaddr*)&addr_p1, &sock_len);
             wprintf(L"Player 1 conectado\n");
         }
 
-        else if (sock_p2 == INVALID_SOCKET) {
-            sock_p2 = accept(server.sockfd, (struct sockaddr*)&addr_p2, &addr_len_p2);
+        else if (player_2 == INVALID_SOCKET) {
+            player_2 = accept(server.sockfd, (struct sockaddr*)&addr_p2, &sock_len);
             wprintf(L"Player 2 conectado\n");
         }
     }
@@ -45,5 +50,12 @@ int main(void) {
     wprintf(L"Servidor fechado.\n");
 
     freeServer(&server);
-    return EXIT_SUCCESS;
+
+    result = _finish();
+    if (result != EXIT_SUCCESS) {
+        wprintf(L"%s > _finish falhou.\n");
+        return result;
+    }
+
+    return result;
 }
